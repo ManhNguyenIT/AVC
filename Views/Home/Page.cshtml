@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<link rel="stylesheet" href="~/css/home.css" />
+<h3 style="font-weight: 200; text-align: center;">
+    GPIO MONOTORING SYSTEM
+</h3>
+<h3 id="date"></h3>
+<div class="row">
+    <div id="result"></div>
+    <ul id="messagesList"></ul>
+</div>
+@section Scripts {
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/home.js"></script>
+}

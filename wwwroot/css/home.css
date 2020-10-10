@@ -1,0 +1,38 @@
+﻿
+#mainViewContainer {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#mainView {
+  width: 100%;
+  height: 100%;
+}
+
+#thumbViewContainer{
+  width: 200px;
+}
+
+.thumbViewClass {
+  border: 1px solid black;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 20%;
+  overflow: hidden;
+}
+
+#thumbView {
+  z-index: 110;
+  background: white;
+}
+
+#scopeContainer {
+  z-index: 120;
+}
+
+header,footer{
+  display: none;
+}
