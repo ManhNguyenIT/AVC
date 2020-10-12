@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using AVC.Models;
 using AVC.Interfaces;
 using AVC.DatabaseModels;
+using Newtonsoft.Json;
 
 namespace AVC.Controllers
 {
@@ -32,8 +33,11 @@ namespace AVC.Controllers
 
         [ValidateAntiForgeryToken]
         [HttpPost("[controller]/create-machine")]
-        public async Task<IActionResult> CreateMachine(Machine machine)
+        public async Task<IActionResult> CreateMachine(string values)
         {
+            var machine = new Machine();
+            JsonConvert.PopulateObject(values, machine);
+
             if (!TryValidateModel(machine))
                 return BadRequest(ModelState.Values);
 
@@ -43,19 +47,31 @@ namespace AVC.Controllers
 
         [ValidateAntiForgeryToken]
         [HttpPut("[controller]/update-machine")]
-        public async Task<IActionResult> UpdateMachine(Machine machine)
+        public async Task<IActionResult> UpdateMachine(string key, string values)
         {
+            var machine = await _machineService.FindByIdAsync(key);
+            if (machine == null)
+            {
+                return NotFound();
+            }
+            var _machine= JsonConvert.DeserializeObject<Machine>(values);
+            machine.status=_machine.status;
+            machine.gpio=_machine.gpio;
+            machine.ip=_machine.ip;
+            machine.name=_machine.name;
+
             if (!TryValidateModel(machine))
                 return BadRequest(ModelState.Values);
-            await _machineService.UpdateByIdAsync(machine.id, machine);
+
+            await _machineService.UpdateByIdAsync(key, machine);
             return Ok();
         }
 
         [ValidateAntiForgeryToken]
         [HttpDelete("[controller]/delete-machine")]
-        public async Task<IActionResult> DeleteMachine(Machine machine)
+        public async Task<IActionResult> DeleteMachine(string key)
         {
-            await _machineService.DeleteByIdAsync(machine.id);
+            await _machineService.DeleteByIdAsync(key);
             return Ok();
         }
 

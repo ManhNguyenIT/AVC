@@ -33,11 +33,6 @@ namespace AVC.Collections
             return await _collection.Find(Builders<TEntity>.Filter.Eq("_id", id)).SingleOrDefaultAsync();
         }
 
-        // public virtual async Task<bool> IsExists(FieldDefinition<TEntity> field)
-        // {
-        //     return await _collection.FindAsync(field);
-        // }
-
         public virtual async Task<IEnumerable<TEntity>> GetsAsync(FilterDefinition<TEntity> filter = null)
         {
             return await (await _collection.FindAsync(filter ?? Builders<TEntity>.Filter.Empty)).ToListAsync();
@@ -48,9 +43,9 @@ namespace AVC.Collections
             return _collection.FindOneAndReplaceAsync(Builders<TEntity>.Filter.Eq("_id", id), obj);
         }
 
-        public async Task<UpdateResult> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update)
+        public async Task<UpdateResult> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, UpdateOptions options = null)
         {
-            return await _collection.UpdateManyAsync(filter, update/*, new UpdateOptions { IsUpsert = true }*/);
+            return await _collection.UpdateManyAsync(filter, update, options);
         }
 
         public virtual Task<TEntity> DeleteByIdAsync(string id)

@@ -4,12 +4,16 @@
 
 <link rel="stylesheet" href="~/css/home.css" />
 <h3 style="font-weight: 200; text-align: center;">
-    GPIO MONOTORING SYSTEM
+    AVC MACHINE MONITORING SYSTEM
 </h3>
 <h3 id="date"></h3>
 <div class="row">
-    <div id="result"></div>
-    <ul id="messagesList"></ul>
+    <div class="col-8">
+        <div id="gridContainer"></div>
+    </div>
+    <div class="col-4">
+        <ul id="messagesList"></ul>
+    </div>
 </div>
 @section Scripts {
     <script src="~/lib/signalr/dist/browser/signalr.js"></script>

@@ -1,35 +1,11 @@
 ﻿@{
     ViewData["Title"] = "Setting Page";
 }
+<link rel="stylesheet" href="~/css/setting.css" />
 <section class="dx-viewport">
-    <div id="tabPanel"></div>
+    @* <div id="tabPanel"></div> *@
+    <div id="gridContainer"></div>
 </section>
 @section Scripts {
-    <script>
-        //let agvStore = new DevExpress.data.ArrayStore({
-        //    key: "id",
-        //    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.agvs))
-        //});
-        //let barcodeStore = new DevExpress.data.ArrayStore({
-        //    key: "id",
-        //    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.barcodes))
-        //});
-        //let junctionStore = new DevExpress.data.ArrayStore({
-        //    key: "id",
-        //    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.junctions))
-        //});
-//
-        //let mappingStore = new DevExpress.data.ArrayStore({
-        //    key: "id",
-        //    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.mapps))
-        //});
-//
-        //let missionStore = new DevExpress.data.ArrayStore({
-        //    key: "id",
-        //    data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.missions))
-        //});
-
-        let token= $($('@Html.AntiForgeryToken()')).val();
-    </script>
     <script src="~/js/setting.js"></script>
 }

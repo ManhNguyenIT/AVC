@@ -36,3 +36,7 @@
 header,footer{
   display: none;
 }
+
+#messagesList>li{
+  color: white;
+}

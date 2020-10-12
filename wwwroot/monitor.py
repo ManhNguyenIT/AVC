@@ -43,10 +43,10 @@ def cbf(GPIO, level, tick):
             GPIO, level, diff, pi.get_current_tick()))
 
         url = "http://192.168.43.140/gpio"
-        data = {'gpio': GPIO, 'level': level}
+        payload = {"port": GPIO, "value": level}
         headers = {"Content-type": "application/x-www-form-urlencoded",
                    "Accept": "text/plain"}
-        thread = RequestThread(url, data, headers)
+        thread = RequestThread(url, payload, headers)
         thread.start()
 
 

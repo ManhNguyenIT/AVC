@@ -3,7 +3,7 @@ using AVC.DatabaseModels;
 
 namespace AVC.Interfaces
 {
-    public interface ILogService : ICollection<Log>
+    public interface ITotalService : ICollection<Total>
     {
     }
 }

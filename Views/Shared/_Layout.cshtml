@@ -95,6 +95,9 @@
     <script src="~/lib/dx/scripts/FileSaver.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/layout.js" asp-append-version="true"></script>
+    <script>
+        let token= $($('@Html.AntiForgeryToken()')).val();
+    </script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>
