@@ -29,7 +29,7 @@ class RequestThread(threading.Thread):
     def run(self):
         try:
             response = requests.post(
-                url=self.url, data=self.data, headers=self.headers, timeout=5)
+                url=self.url, json=self.data, headers=self.headers, timeout=5)
             print(response.status_code, response.reason)
         except:
             pass
@@ -42,10 +42,9 @@ def cbf(GPIO, level, tick):
         print("G={} l={} d={} tick={}".format(
             GPIO, level, diff, pi.get_current_tick()))
 
-        url = "http://192.168.43.140/gpio"
+        url = "http://localhost:5000/service-center/update"
         payload = {"port": GPIO, "value": level}
-        headers = {"Content-type": "application/x-www-form-urlencoded",
-                   "Accept": "text/plain"}
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         thread = RequestThread(url, payload, headers)
         thread.start()
 
