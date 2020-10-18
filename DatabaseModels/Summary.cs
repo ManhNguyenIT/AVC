@@ -4,8 +4,7 @@ namespace AVC.DatabaseModels
 {
     public class Summary : BaseEntity
     {
-        public virtual string ip { get; set; }
-        public virtual string name { get; set; }
+        public virtual Machine machine { get; set; }
         public virtual long count { get; set; } = 0;
         public virtual long _time { get; set; } = 0;
         public virtual double time { get => Math.Round(TimeSpan.FromSeconds(_time).TotalHours, 2); }

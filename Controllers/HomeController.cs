@@ -37,36 +37,43 @@ namespace AVC.Controllers
             return Ok(await _machineService.GetsAsync());
         }
 
+        [ValidateAntiForgeryToken]
+        [HttpPost("[controller]/logs")]
+        public async Task<IActionResult> Logs(string ip)
+        {
+            return Ok(await _logService
+                            .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.type == GPIO_TYPE.POWER && i.ip == ip),
+                                        new FindOptions<Log, Log>() { Limit = 5, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }));
+        }
+
         [HttpGet("[controller]/summaries")]
         public async Task<IActionResult> Summaries()
         {
-            IEnumerable<Summary> summaries = new List<Summary>();
+            List<Summary> summaries = new List<Summary>();
             try
             {
-                var date = ((DateTimeOffset)DateTime.Now.Date.AddDays(-7)).ToUnixTimeSeconds();
-                summaries = await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
-                                                                                        new FindOptions<Summary, Summary>() { Sort = Builders<Summary>.Sort.Ascending(i => i.timeCreate) });
-
-                date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
-                foreach (var summary in summaries)
+                var date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
+                foreach (var machine in (await _machineService.GetsAsync()))
                 {
-                    if (!(summary.timeCreate < date))
+                    var summary = (await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
+                                                                new FindOptions<Summary, Summary>() { Limit = 1 })).FirstOrDefault();
+                    if (summary == null)
                     {
-                        var machine = await _machineService.FindByIpAsync(summary.ip);
-                        var index = machine?.gpio.FindIndex(i => i.type == GPIO_TYPE.TIMER) ?? -1;
-                        if (index != -1)
-                        {
-                            var _log = (await _logService
-                                        .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.ip == machine.ip && i.gpio.port == machine.gpio[index].port && !(i.timeCreate < date)),
+                        summary = new Summary() { machine = machine };
+                    }
+                    if (machine.status)
+                    {
+                        var log = (await _logService
+                                        .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.ip == summary.machine.ip && !(i.timeCreate < date)),
                                                     new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                                         .FirstOrDefault();
-                            if (_log == null)
-                            {
-                                _log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
-                            }
-                            summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - _log.timeCreate);
+                        if (log == null)
+                        {
+                            log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
                         }
+                        summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - log.timeCreate);
                     }
+                    summaries.Add(summary);
                 }
             }
             catch (System.Exception e)
@@ -76,6 +83,25 @@ namespace AVC.Controllers
             return Json(summaries);
         }
 
+        [HttpGet("[controller]/report")]
+        public IActionResult Report()
+        {
+            return View();
+        }
+
+        [ValidateAntiForgeryToken]
+        [HttpPost("[controller]/report")]
+        public async Task<IActionResult> Report(string from, string to)
+        {
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+            {
+                return BadRequest();
+            }
+            var _from = ((DateTimeOffset)Convert.ToDateTime(from)).ToUnixTimeSeconds();
+            var _to = ((DateTimeOffset)Convert.ToDateTime(to).AddDays(1)).ToUnixTimeSeconds();
+            return Ok(await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < _from) && !(i.timeCreate > _to)),
+                                                                new FindOptions<Summary, Summary>() { Sort = Builders<Summary>.Sort.Ascending(i => i.timeCreate) }));
+        }
         public IActionResult Page()
         {
             return View();

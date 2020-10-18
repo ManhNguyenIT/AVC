@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AVC.DatabaseModels;
@@ -71,7 +72,6 @@ public class ServiceCenterController : ControllerBase
         }
         else
         {
-            machine.status = true;
             machine.gpio[index].value = gpio.value;
             var log = new Log()
             {
@@ -84,7 +84,7 @@ public class ServiceCenterController : ControllerBase
             machine.timeUpdate = ((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds();
             var date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
             var summary = (await _summaryService
-                            .GetsAsync(Builders<Summary>.Filter.Where(i => i.ip == machine.ip && !(i.timeCreate < date)),
+                            .GetsAsync(Builders<Summary>.Filter.Where(i => i.machine.ip == machine.ip && !(i.timeCreate < date)),
                                         new FindOptions<Summary, Summary>() { Limit = 1, Sort = Builders<Summary>.Sort.Descending(i => i.timeCreate) }))
                             .FirstOrDefault();
 
@@ -92,8 +92,7 @@ public class ServiceCenterController : ControllerBase
             {
                 summary = new Summary()
                 {
-                    ip = machine.ip,
-                    name = machine.name
+                    machine = machine
                 };
                 await _summaryService.CreateAsync(summary);
             }
@@ -106,9 +105,10 @@ public class ServiceCenterController : ControllerBase
                         summary.count++;
                     }
                     break;
-                case GPIO_TYPE.TIMER:
+                case GPIO_TYPE.POWER:
                     if (machine.gpio[index].value == 1)
                     {
+                        machine.status = false;
                         var _log = (await _logService
                             .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.ip == machine.ip && i.gpio.port == machine.gpio[index].port && !(i.timeCreate < date)),
                                         new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
@@ -120,47 +120,53 @@ public class ServiceCenterController : ControllerBase
 
                         summary._time += (log.timeCreate - _log.timeCreate);
                     }
+                    else
+                    {
+                        machine.status = true;
+                    }
+                    summary.machine = machine;
                     break;
                 default:
                     break;
             }
             await _summaryService.UpdateByIdAsync(summary.id, summary);
             await _machineService.UpdateByIdAsync(machine.id, machine);
-
-            try
-            {
-                date = ((DateTimeOffset)DateTime.Now.Date.AddDays(-7)).ToUnixTimeSeconds();
-                var summaries = await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
-                                                                                        new FindOptions<Summary, Summary>() { Sort = Builders<Summary>.Sort.Ascending(i => i.timeCreate) });
-
-                date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
-                foreach (var _summary in summaries)
-                {
-                    if (!(_summary.timeCreate < date))
-                    {
-                        var _machine = await _machineService.FindByIpAsync(_summary.ip);
-                        var _index = _machine?.gpio.FindIndex(i => i.type == GPIO_TYPE.TIMER) ?? -1;
-                        if (_index != -1)
-                        {
-                            var _log = (await _logService
-                                        .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.ip == _machine.ip && i.gpio.port == _machine.gpio[_index].port && !(i.timeCreate < date)),
-                                                    new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
-                                        .FirstOrDefault();
-                            if (_log == null)
-                            {
-                                _log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
-                            }
-                            _summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - _log.timeCreate);
-                        }
-                    }
-                }
-                await _hubContext.Clients.All.Summaries(summaries);
-            }
-            catch (System.Exception e)
-            {
-                _logger.LogError(e.Message);
-            }
         }
+
+        try
+        {
+            var date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
+            var summaries = new List<Summary>();
+
+            foreach (var _machine in (await _machineService.GetsAsync()))
+            {
+                var summary = (await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
+                                                            new FindOptions<Summary, Summary>() { Limit = 1 })).FirstOrDefault();
+                if (summary == null)
+                {
+                    summary = new Summary() { machine = _machine };
+                }
+                if (_machine.status)
+                {
+                    var log = (await _logService
+                                    .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.ip == summary.machine.ip && !(i.timeCreate < date)),
+                                                new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
+                                    .FirstOrDefault();
+                    if (log == null)
+                    {
+                        log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
+                    }
+                    summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - log.timeCreate);
+                }
+                summaries.Add(summary);
+            }
+            await _hubContext.Clients.All.Summaries(summaries);
+        }
+        catch (System.Exception e)
+        {
+            _logger.LogError(e.Message);
+        }
+
         return Ok();
     }
 }

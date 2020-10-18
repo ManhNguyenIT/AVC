@@ -26,3 +26,6 @@
     display: inline-block;
     line-height: 1.5;
 }
+#tabPanelContainer{
+  margin-top: 10px;
+}

@@ -4,7 +4,7 @@ namespace AVC.DatabaseModels
 {
     public enum GPIO_TYPE
     {
-        TIMER, COUTER
+        POWER, COUTER
     }
     public class GPIO
     {

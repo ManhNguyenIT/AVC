@@ -65,15 +65,10 @@ $(async () => {
     };
 
     connection.on("Log", function (log) {
-        var li = document.createElement("li");
-        // li.style.cssText = gpio.value === 1 ? 'background-color:green' : 'background-color:red';
-        li.textContent = log.ip + "\t" + log.gpio.name + "\t" + log.gpio.value;
-        document.getElementById("messagesList").prepend(li);
+        console.log(log);
     });
 
-    connection.on("Summaries", processing);
-
-    function processing(response) {
+    connection.on("Summaries", function (response) {
         for (let index = 0; index < response.length; index++) {
             if (machine !== null && response[index].name !== machine) {
                 if (response.find(i => i.id === data[index].id) === null) {
@@ -95,7 +90,7 @@ $(async () => {
             }
         }
         $("#gridContainer").dxDataGrid("instance").refresh();
-    }
+    });
 
     $("#gridContainer").dxDataGrid({
         dataSource: {
@@ -112,290 +107,79 @@ $(async () => {
         loadPanel: {
             enabled: false
         },
-        paging: {
-            pageSize: 10
-        },
         headerFilter: {
             visible: true,
             allowSearch: true
         },
         wordWrapEnabled: true,
-        export: {
-            enabled: true,
-            allowExportSelectedData: true
-        },
-        onExporting: function (e) {
-            var workbook = new ExcelJS.Workbook();
-            var worksheet = workbook.addWorksheet('summeries');
-            DevExpress.excelExporter.exportDataGrid({
-                component: e.component,
-                worksheet: worksheet,
-                autoFilterEnabled: true
-            }).then(function () {
-                workbook.xlsx.writeBuffer().then(function (buffer) {
-                    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'summeries-' + (new Date().toLocaleDateString().replace(/\/|\-/g, '.')) + '.xlsx');
-                });
-            });
-            e.cancel = true;
-        },
         columns: [{
-            //     caption: '#',
-            //     width: 50,
-            //     dataType: "number",
-            //     allowEditing: false,
-            //     cellTemplate: function (container, options) {
-            //         container.text(options.row.rowIndex + 1)
-            //     }
-            // }, {
+            caption: '#',
+            width: 50,
+            dataType: "number",
+            allowEditing: false,
+            cellTemplate: function (container, options) {
+                container.text(options.row.rowIndex + 1)
+            }
+        }, {
             caption: "IP",
-            dataField: "ip",
+            dataField: "machine.ip",
         }, {
             caption: "Name",
-            dataField: "name",
+            dataField: "machine.name",
         }, {
-            caption: "Date",
-            dataField: "date",
-            dataType: "date",
-            // groupIndex: 0
+            caption: "Status",
+            dataField: "machine.status",
+            dataType: "boolean",
+            cellTemplate: function (container, options) {
+                container.text(options.data.machine.status === true ? "ON" : "OFF")
+                    .css("color", "white")
+                    .css("background-color", options.data.machine.status === true ? "green" : "gray")
+            }
         }, {
             caption: "Total time",
-            dataField: "time",
+            dataField: "display",
             dataType: "time",
         }, {
             caption: "Count",
             dataField: "count",
             dataType: "number",
         }],
-        onToolbarPreparing: function (e) {
-            e.toolbarOptions.items.unshift({
-                location: "before",
-                widget: "dxSelectBox",
-                options: {
-                    width: 200,
-                    dataSource: {
-                        store: machineStore,
-                        reshapeOnPush: true
+        masterDetail: {
+            enabled: true,
+            template: function (container, options) {
+                $("<div>")
+                    .addClass("master-detail-caption")
+                    .text("Logs")
+                    .appendTo(container);
+
+                $("<div>").dxDataGrid({
+                    dataSource: new DevExpress.data.CustomStore({
+                        key: "id",
+                        load: function () {
+                            var deferred = $.Deferred();
+                            $.post('logs', {
+                                '__RequestVerificationToken': token,
+                                ip: options.data.machine.ip
+                            }).done(function (response) {
+                                deferred.resolve(response);
+                            });
+                            return deferred.promise();
+                        }
+                    }),
+                    loadPanel: {
+                        enabled: false
                     },
-                    valueExpr: "name",
-                    displayExpr: "name",
-                    showClearButton: true,
-                    deferRendering: false,
-                    onContentReady: function (e) {
-                        // let firstItem = e.component.option("items[0]");
-                        // if (firstItem) {
-                        //     e.component.option("value", firstItem.name);
-                        // }
-                    },
-                    onValueChanged: function (e) {
-                        machine = e.value;
-                        processing(data);
-                    }
-                }
-            }, {
-                location: "after",
-                widget: "dxButton",
-                options: {
-                    icon: "refresh",
-                    onClick: function () {
-                        e.component.refresh();
-                    }
-                }
-            });
+                    columns: [{
+                        caption: "Value",
+                        dataField: "gpio.value",
+                    }, {
+                        caption: "Time update",
+                        dataField: "display",
+                    }],
+                }).appendTo(container);
+            }
         }
     }).dxDataGrid("instance");
 
-    $("#chartContainer")
-        .append($('<div class="col">').dxChart({
-            palette: "Green Mist",
-            dataSource: {
-                store: dataStore,
-                reshapeOnPush: true
-            },
-            loadingIndicator: {
-                enabled: false
-            },
-            size: {
-                height: 300,
-            },
-            commonSeriesSettings: {
-                argumentField: "date",
-                valueField: "time",
-                type: "bar",
-                hoverMode: "allArgumentPoints",
-                selectionMode: "allArgumentPoints",
-                label: {
-                    visible: true,
-                    format: {
-                        type: "fixedPoint",
-                        precision: 0
-                    }
-                }
-            },
-            seriesTemplate: {
-                nameField: "name"
-            },
-            valueAxis: [{
-                title: {
-                    text: "Hour",
-                    font: {
-                        color: "#e91e63"
-                    }
-                },
-                label: {
-                    font: {
-                        color: "#e91e63"
-                    }
-                },
-                name: "time",
-                position: "left",
-                constantLines: [{
-                    value: 8,
-                    color: "#fc3535",
-                    dashStyle: "dash",
-                    width: 2,
-                    label: {
-                        text: "Low Hour"
-                    },
-                }],
-                // }, {
-                //     title: {
-                //         text: "Count",
-                //         font: {
-                //             color: "#03a9f4"
-                //         }
-                //     },
-                //     label: {
-                //         font: {
-                //             color: "#03a9f4"
-                //         }
-                //     },
-                //     name: "count",
-                //     position: "right",
-                //     showZero: true,
-                //     valueMarginsEnabled: false
-            }],
-            // series: [{
-            //     valueField: "time",
-            //     axis: "time",
-            //     name: "Hour",
-            // }, {
-            //     type: "spline",
-            //     valueField: "count",
-            //     axis: "count",
-            //     name: "Count",
-            // }],
-            tooltip: {
-                enabled: true,
-                customizeTooltip: function (arg) {
-                    return {
-                        html: arg.seriesName === "Count" ? "" : "<div><div class='tooltip-header'>" +
-                            arg.argumentText + "</div>" +
-                            "<div class='tooltip-body'><div class='series-name'>" +
-                            arg.seriesName +
-                            ": </div><div class='value-text'>" +
-                            arg.valueText + "(" + arg.point.data.percent + "%)" +
-                            "</div></div></div>"
-                    };
-                }
-            },
-            legend: {
-                verticalAlignment: "bottom",
-                horizontalAlignment: "center"
-            },
-            customizePoint: function (arg) {
-                if (this.value < 8) {
-                    return { color: "#ff7c7c", hoverStyle: { color: "#ff7c7c" } };
-                }
-            },
-            customizeLabel: function (arg) {
-                // if (arg.seriesName === "Hour") {
-                return {
-                    visible: true,
-                    customizeText: function () {
-                        return arg.data.display;
-                    }
-                };
-                // }
-            },
-        }))
-        .append($('<div class="col">').dxChart({
-            palette: "Green Mist",
-            dataSource: {
-                store: dataStore,
-                reshapeOnPush: true
-            },
-            loadingIndicator: {
-                enabled: false
-            },
-            size: {
-                height: 300,
-            },
-            commonSeriesSettings: {
-                argumentField: "date",
-                valueField: "count",
-                type: "bar",
-                hoverMode: "allArgumentPoints",
-                selectionMode: "allArgumentPoints",
-                label: {
-                    visible: true,
-                    format: {
-                        type: "fixedPoint",
-                        precision: 0
-                    }
-                }
-            },
-            seriesTemplate: {
-                nameField: "name"
-            },
-            valueAxis: [{
-            }, {
-                title: {
-                    text: "Count",
-                    font: {
-                        color: "#03a9f4"
-                    }
-                },
-                label: {
-                    font: {
-                        color: "#03a9f4"
-                    }
-                },
-                name: "count",
-                position: "right",
-                showZero: true,
-                valueMarginsEnabled: false
-            }],
-            tooltip: {
-                enabled: true,
-                customizeTooltip: function (arg) {
-                    return {
-                        html: arg.seriesName === "Count" ? "" : "<div><div class='tooltip-header'>" +
-                            arg.argumentText + "</div>" +
-                            "<div class='tooltip-body'><div class='series-name'>" +
-                            arg.seriesName +
-                            ": </div></div></div>"
-                    };
-                }
-            },
-            legend: {
-                verticalAlignment: "bottom",
-                horizontalAlignment: "center"
-            },
-            customizePoint: function (arg) {
-                if (arg.seriesName === "Hour" && this.value < 8) {
-                    return { color: "#ff7c7c", hoverStyle: { color: "#ff7c7c" } };
-                }
-            },
-            customizeLabel: function (arg) {
-                if (arg.seriesName === "Hour") {
-                    return {
-                        visible: true,
-                        customizeText: function () {
-                            return arg.data.display;
-                        }
-                    };
-                }
-            },
-        }));
     await start();
 });

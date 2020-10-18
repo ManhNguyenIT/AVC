@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,30 +39,30 @@ namespace AVC.Hubs
             {
                 try
                 {
-                    var date = ((DateTimeOffset)DateTime.Now.Date.AddDays(-7)).ToUnixTimeSeconds();
-                    var summaries = await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
-                                                                                            new FindOptions<Summary, Summary>() { Sort = Builders<Summary>.Sort.Ascending(i => i.timeCreate) });
+                    var date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
+                    var summaries = new List<Summary>();
 
-                    date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
-                    foreach (var summary in summaries)
+                    foreach (var machine in (await _machineService.GetsAsync()))
                     {
-                        if (!(summary.timeCreate < date))
+                        var summary = (await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
+                                                                    new FindOptions<Summary, Summary>() { Limit = 1 })).FirstOrDefault();
+                        if (summary == null)
                         {
-                            var machine = await _machineService.FindByIpAsync(summary.ip);
-                            var index = machine?.gpio.FindIndex(i => i.type == GPIO_TYPE.TIMER) ?? -1;
-                            if (index != -1)
-                            {
-                                var _log = (await _logService
-                                            .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.ip == machine.ip && i.gpio.port == machine.gpio[index].port && !(i.timeCreate < date)),
+                            summary = new Summary() { machine = machine };
+                        }
+                        if (machine.status)
+                        {
+                            var log = (await _logService
+                                            .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.ip == summary.machine.ip && !(i.timeCreate < date)),
                                                         new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                                             .FirstOrDefault();
-                                if (_log == null)
-                                {
-                                    _log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
-                                }
-                                summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - _log.timeCreate);
+                            if (log == null)
+                            {
+                                log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
                             }
+                            summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - log.timeCreate);
                         }
+                        summaries.Add(summary);
                     }
                     await _hubContext.Clients.All.Summaries(summaries);
                 }
@@ -69,7 +70,7 @@ namespace AVC.Hubs
                 {
                     _logger.LogError(e.Message);
                 }
-                await Task.Delay(5000);
+                await Task.Delay(1000);
             }
         }
     }
