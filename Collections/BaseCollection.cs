@@ -33,9 +33,9 @@ namespace AVC.Collections
             return await _collection.Find(Builders<TEntity>.Filter.Eq("_id", id)).SingleOrDefaultAsync();
         }
 
-        public virtual async Task<IEnumerable<TEntity>> GetsAsync(FilterDefinition<TEntity> filter = null)
+        public virtual async Task<IEnumerable<TEntity>> GetsAsync(FilterDefinition<TEntity> filter, FindOptions<TEntity, TEntity> options = null)
         {
-            return await (await _collection.FindAsync(filter ?? Builders<TEntity>.Filter.Empty)).ToListAsync();
+            return await (await _collection.FindAsync(filter ?? Builders<TEntity>.Filter.Empty, options ?? new FindOptions<TEntity, TEntity>())).ToListAsync();
         }
 
         public virtual Task<TEntity> UpdateByIdAsync(string id, TEntity obj)

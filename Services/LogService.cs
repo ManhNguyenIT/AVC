@@ -46,9 +46,9 @@ namespace AVC.Services
             return await _logCollection.FindByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Log>> GetsAsync(FilterDefinition<Log> filter)
+        public async Task<IEnumerable<Log>> GetsAsync(FilterDefinition<Log> filter, FindOptions<Log, Log> options)
         {
-            return await _logCollection.GetsAsync(filter);
+            return await _logCollection.GetsAsync(filter, options);
         }
 
         public async Task<UpdateResult> UpdateManyAsync(FilterDefinition<Log> filter, UpdateDefinition<Log> update)

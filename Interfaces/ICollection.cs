@@ -10,7 +10,7 @@ namespace AVC.Interfaces
         Task CreateAsync(TEntity obj);
         Task CreateManyAsync(IEnumerable<TEntity> obj);
         Task<TEntity> FindByIdAsync(string id);
-        Task<IEnumerable<TEntity>> GetsAsync(FilterDefinition<TEntity> filter = null);
+        Task<IEnumerable<TEntity>> GetsAsync(FilterDefinition<TEntity> filter = null, FindOptions<TEntity, TEntity> options = null);
         Task<TEntity> UpdateByIdAsync(string id, TEntity obj);
         Task<UpdateResult> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, UpdateOptions options = null);
         Task<TEntity> DeleteByIdAsync(string id);

@@ -9,7 +9,8 @@ namespace AVC.Hubs
 
         public static class Events
         {
-            public static string Update => nameof(IHubService.Update);
+            public static string Log => nameof(IHubService.Log);
+            public static string Summaries => nameof(IHubService.Summaries);
             public static string OnClientConnected => nameof(IHubService.OnClientConnected);
         }
     }

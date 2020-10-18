@@ -7,7 +7,8 @@ namespace AVC.Hubs
 {
     public interface IHubService
     {
-        Task Update(string date, Machine machines, Log log, Total total);
+        Task Log(Log log);
+        Task Summaries(IEnumerable<Summary> summaries);
         Task OnClientConnected(IEnumerable<Machine> machines);
     }
 }

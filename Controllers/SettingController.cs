@@ -6,6 +6,7 @@ using AVC.Models;
 using AVC.Interfaces;
 using AVC.DatabaseModels;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace AVC.Controllers
 {
@@ -26,9 +27,21 @@ namespace AVC.Controllers
         }
 
         [HttpGet("[controller]/machines")]
-        public async Task<IActionResult> GetMachine()
+        public async Task<IActionResult> Machines()
         {
             return Ok(await _machineService.GetsAsync());
+        }
+
+        [HttpGet("[controller]/types")]
+        public IActionResult Types()
+        {
+            return Ok(System.Enum.GetValues(typeof(GPIO_TYPE))
+                        .Cast<GPIO_TYPE>()
+                        .Select(i => new
+                        {
+                            id = (int)i,
+                            name = i.ToString()
+                        }));
         }
 
         [ValidateAntiForgeryToken]
@@ -54,11 +67,11 @@ namespace AVC.Controllers
             {
                 return NotFound();
             }
-            var _machine= JsonConvert.DeserializeObject<Machine>(values);
-            machine.status=_machine.status;
-            machine.gpio=_machine.gpio;
-            machine.ip=_machine.ip;
-            machine.name=_machine.name;
+            var _machine = JsonConvert.DeserializeObject<Machine>(values);
+            machine.status = _machine.status;
+            machine.gpio = _machine.gpio;
+            machine.ip = _machine.ip;
+            machine.name = _machine.name;
 
             if (!TryValidateModel(machine))
                 return BadRequest(ModelState.Values);

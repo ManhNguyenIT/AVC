@@ -4,36 +4,43 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    <div class="dx-item dx-toolbar-item dx-toolbar-label">
-        <div class="dx-item-content dx-toolbar-item-content">
-            <form method="get" class="form-inline" action="/manage/index">
-                <button  type="button" class="nav-link btn btn-link text-dark">@User.Identity.Name</button>
-            </form>
-        </div>
-    </div>
-    <div class="dx-item dx-toolbar-item dx-toolbar-label">
-        <div class="dx-item-content dx-toolbar-item-content">
-            <form method="post" class="form-inline" action="/account/logout">
-                @Html.AntiForgeryToken()
-                <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
-            </form>
-        </div>
-    </div>
+    <li class="nav-item">
+        <a class="nav-link pl-0" asp-area="" asp-controller="" asp-action="">
+            <i class="dx-icon-user"></i> <span class="d-none d-md-inline">@User.Identity.Name</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link pl-0" onclick="document.getElementById('logout').submit();" asp-area="" asp-controller="account"
+    asp-action="Logout">
+            @* <i class="dx-icon-user"></i> *@
+            <span class="d-none d-md-inline">Đăng xuất</span>
+        </a>
+    </li>
+    @* <form method="get" class="form-inline" action="/manage/index">
+        <button type="button" class="btn btn-link text-dark nav-link">@User.Identity.Name</button>
+        </form> *@
+    <form class="dx-hidden" id="logout" method="post" class="form-inline" action="/account/logout">
+        <button type="submit" class="btn btn-link text-dark nav-link">Logout</button>
+    </form>
 }
 else
 {
-    <div class="dx-item dx-toolbar-item dx-toolbar-label">
-        <div class="dx-item-content dx-toolbar-item-content">
-            <form method="get" class="form-inline" action="/account/register">
-                <button  type="submit" class="nav-link btn btn-link text-dark">Register</button>
-            </form>
-        </div>
-    </div>
-    <div class="dx-item dx-toolbar-item dx-toolbar-label">
-        <div class="dx-item-content dx-toolbar-item-content">
-            <form method="get" class="form-inline" action="/account/login">
-                <button  type="submit" class="nav-link btn btn-link text-dark">Login</button>
-            </form>
-        </div>
-    </div>
+    <li class="nav-item">
+        <a class="nav-link pl-0" asp-area="" asp-controller="account" asp-action="register">
+            @* <i class="dx-icon-user"></i> *@
+            <span class="d-none d-md-inline">Đăng ký</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link pl-0" asp-area="" asp-controller="account" asp-action="login">
+            @* <i class="dx-icon-user"></i> *@
+            <span class="d-none d-md-inline">Đăng nhập</span>
+        </a>
+    </li>
+    @* <form method="get" class="form-inline" action="/account/register">
+        <button type="submit" class="btn btn-link text-dark nav-link">Register</button>
+        </form>
+        <form method="get" class="form-inline" action="/account/login">
+        <button type="submit" class="btn btn-link text-dark nav-link">Login</button>
+        </form> *@
 }

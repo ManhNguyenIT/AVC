@@ -51,9 +51,9 @@ namespace AVC.Services
             return await _machineCollection.FindByIpAsync(ip);
         }
 
-        public async Task<IEnumerable<Machine>> GetsAsync(FilterDefinition<Machine> filter)
+        public async Task<IEnumerable<Machine>> GetsAsync(FilterDefinition<Machine> filter, FindOptions<Machine, Machine> options)
         {
-            return await _machineCollection.GetsAsync(filter);
+            return await _machineCollection.GetsAsync(filter, options);
         }
 
         public async Task<UpdateResult> UpdateManyAsync(FilterDefinition<Machine> filter, UpdateDefinition<Machine> update, UpdateOptions options = null)

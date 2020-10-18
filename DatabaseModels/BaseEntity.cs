@@ -14,15 +14,14 @@ namespace AVC.DatabaseModels
         public virtual string userCreate { get; set; }
         public virtual long timeUpdate { get; set; }
         public virtual string userUpdate { get; set; }
-        // public virtual string date { get => DateTimeOffset.FromUnixTimeSeconds(timeCreate).LocalDateTime.Date.ToShortDateString(); }
-
-        // public virtual int year { get => Convert.ToDateTime(date).Year; }
-        // public virtual int month { get => Convert.ToDateTime(date).Month; }
-        // public virtual int week { get => GetIso8601WeekOfYear(Convert.ToDateTime(date)); }
+        public virtual string date { get => DateTimeOffset.FromUnixTimeSeconds(timeCreate).LocalDateTime.Date.ToShortDateString(); }
+        public virtual int year { get => Convert.ToDateTime(date).Year; }
+        public virtual int month { get => Convert.ToDateTime(date).Month; }
+        public virtual int week { get => GetIso8601WeekOfYear(Convert.ToDateTime(date)); }
         public BaseEntity()
         {
             id = Guid.NewGuid().ToString();
-            timeCreate = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
+            timeCreate = ((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds();
         }
 
         public static int GetIso8601WeekOfYear(DateTime time)

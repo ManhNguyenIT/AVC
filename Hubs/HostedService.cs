@@ -21,11 +21,16 @@ namespace AVC.Hubs
                 .WithUrl(HubServiceConfig.HubUrl)
                 .Build();
 
-            _connection.On<string, Machine, Log, Total>(HubServiceConfig.Events.Update, Update);
+            _connection.On<Log>(HubServiceConfig.Events.Log, Log);
+            _connection.On<List<Summary>>(HubServiceConfig.Events.Summaries, Summaries);
             _connection.On<IEnumerable<Machine>>(HubServiceConfig.Events.OnClientConnected, OnClientConnected);
         }
 
-        public Task Update(string date, Machine machines, Log log, Total total)
+        public Task Log(Log log)
+        {
+            return Task.CompletedTask;
+        }
+        public Task Summaries(IEnumerable<Summary> summaries)
         {
             return Task.CompletedTask;
         }

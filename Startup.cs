@@ -57,8 +57,8 @@ namespace AVC
             services.AddTransient<ILogService, LogService>();
             services.AddTransient<IMachineCollection, MachineCollection>();
             services.AddTransient<IMachineService, MachineService>();
-            services.AddTransient<ITotalCollection, TotalCollection>();
-            services.AddTransient<ITotalService, TotalService>();
+            services.AddTransient<ISummaryCollection, SummaryCollection>();
+            services.AddTransient<ISummaryService, SummaryService>();
 
             services.AddSingleton<IAuthorizationPolicyProvider, AuthorizationPolicyProvider>();
             services.AddSingleton<IAuthorizationHandler, HasClaimHandler>();
