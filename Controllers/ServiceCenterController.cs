@@ -51,7 +51,7 @@ public class ServiceCenterController : ControllerBase
     [HttpPost("update")]
     public async Task<IActionResult> Update([FromBody] GPIO gpio)
     {
-        var machine = await _machineService.FindByIpAsync(ip);
+        var machine = (await _machineService.GetsAsync(Builders<Machine>.Filter.Where(i => i.ip == ip && i.gpio.Any(i => i.port == gpio.port)))).FirstOrDefault();
         if (machine == null)
         {
             return NotFound();
@@ -75,7 +75,7 @@ public class ServiceCenterController : ControllerBase
             machine.gpio[index].value = gpio.value;
             var log = new Log()
             {
-                ip = machine.ip,
+                name = machine.name,
                 gpio = machine.gpio[index],
             };
             await _logService.CreateAsync(log);
@@ -84,7 +84,7 @@ public class ServiceCenterController : ControllerBase
             machine.timeUpdate = ((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds();
             var date = ((DateTimeOffset)DateTime.Now.Date).ToUnixTimeSeconds();
             var summary = (await _summaryService
-                            .GetsAsync(Builders<Summary>.Filter.Where(i => i.machine.ip == machine.ip && !(i.timeCreate < date)),
+                            .GetsAsync(Builders<Summary>.Filter.Where(i => i.machine.name == machine.name && !(i.timeCreate < date)),
                                         new FindOptions<Summary, Summary>() { Limit = 1, Sort = Builders<Summary>.Sort.Descending(i => i.timeCreate) }))
                             .FirstOrDefault();
 
@@ -110,7 +110,7 @@ public class ServiceCenterController : ControllerBase
                     {
                         machine.status = false;
                         var _log = (await _logService
-                            .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.ip == machine.ip && i.gpio.port == machine.gpio[index].port && !(i.timeCreate < date)),
+                            .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.name == machine.name && i.gpio.port == machine.gpio[index].port && !(i.timeCreate < date)),
                                         new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                             .FirstOrDefault();
                         if (_log == null)
@@ -140,7 +140,7 @@ public class ServiceCenterController : ControllerBase
 
             foreach (var _machine in (await _machineService.GetsAsync()))
             {
-                var summary = (await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
+                var summary = (await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => i.machine.name == _machine.name && !(i.timeCreate < date)),
                                                             new FindOptions<Summary, Summary>() { Limit = 1 })).FirstOrDefault();
                 if (summary == null)
                 {
@@ -149,7 +149,7 @@ public class ServiceCenterController : ControllerBase
                 if (_machine.status)
                 {
                     var log = (await _logService
-                                    .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.ip == summary.machine.ip && !(i.timeCreate < date)),
+                                    .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.name == _machine.name && !(i.timeCreate < date)),
                                                 new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                                     .FirstOrDefault();
                     if (log == null)

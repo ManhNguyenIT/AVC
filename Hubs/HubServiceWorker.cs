@@ -44,8 +44,8 @@ namespace AVC.Hubs
 
                     foreach (var machine in (await _machineService.GetsAsync()))
                     {
-                        var summary = (await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => !(i.timeCreate < date)),
-                                                                    new FindOptions<Summary, Summary>() { Limit = 1 })).FirstOrDefault();
+                        var summary = (await _summaryService.GetsAsync(Builders<Summary>.Filter.Where(i => i.machine.name == machine.name && !(i.timeCreate < date)),
+                                                            new FindOptions<Summary, Summary>() { Limit = 1 })).FirstOrDefault();
                         if (summary == null)
                         {
                             summary = new Summary() { machine = machine };
@@ -53,7 +53,7 @@ namespace AVC.Hubs
                         if (machine.status)
                         {
                             var log = (await _logService
-                                            .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.ip == summary.machine.ip && !(i.timeCreate < date)),
+                                            .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.name == summary.machine.name && !(i.timeCreate < date)),
                                                         new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                                             .FirstOrDefault();
                             if (log == null)

@@ -1,7 +1,7 @@
 "use strict";
 
 $(function () {
-    let from, to, data = [];
+    let from, to, min_hour = 8, min_count = 1000, data = [];
     let dataStore = new DevExpress.data.ArrayStore({
         key: "id",
         data: data
@@ -82,16 +82,16 @@ $(function () {
         swipeEnabled: true,
         animationEnabled: true,
         items: [{
-            title: 'Hour',
+            title: 'Thời gian vận hành',
         }, {
-            title: 'Count',
+            title: 'Số lần cắt',
         }, {
-            title: 'Detail',
+            title: 'Lịch sử',
         }],
         itemTemplate: function (itemData, itemIndex, itemElement) {
             switch (itemData.title) {
-                case 'Hour':
-                    $("<div>").dxChart({
+                case 'Thời gian vận hành':
+                    $("<div id='hourChartContainer'>").dxChart({
                         palette: "Green Mist",
                         dataSource: {
                             store: dataStore,
@@ -119,7 +119,7 @@ $(function () {
                         },
                         valueAxis: [{
                             title: {
-                                text: "Hour",
+                                text: "Thời gian vận hành",
                                 font: {
                                     color: "#e91e63"
                                 }
@@ -132,12 +132,12 @@ $(function () {
                             name: "time",
                             position: "left",
                             constantLines: [{
-                                value: 8,
-                                color: "#fc3535",
+                                value: min_hour,
+                                color: "#e91e63",
                                 dashStyle: "dash",
                                 width: 2,
                                 label: {
-                                    text: "Low Hour"
+                                    text: "Thời gian vận hành tối thiểu"
                                 },
                             }],
                             // }, {
@@ -176,7 +176,7 @@ $(function () {
                             horizontalAlignment: "right"
                         },
                         customizePoint: function (arg) {
-                            if (this.value < 8) {
+                            if (this.value < min_hour) {
                                 return { color: "#ff7c7c", hoverStyle: { color: "#ff7c7c" } };
                             }
                         },
@@ -192,8 +192,8 @@ $(function () {
                         },
                     }).appendTo(itemElement)
                     break;
-                case 'Count':
-                    $("<div>").dxChart({
+                case 'Số lần cắt':
+                    $("<div id='countChartContainer'>").dxChart({
                         palette: "Green Mist",
                         dataSource: {
                             store: dataStore,
@@ -221,7 +221,7 @@ $(function () {
                         },
                         valueAxis: [{
                             title: {
-                                text: "Count",
+                                text: "Số lần cắt",
                                 font: {
                                     color: "#03a9f4"
                                 }
@@ -234,7 +234,16 @@ $(function () {
                             name: "count",
                             position: "left",
                             showZero: true,
-                            valueMarginsEnabled: false
+                            valueMarginsEnabled: false,
+                            constantLines: [{
+                                value: min_count,
+                                color: "#03a9f4",
+                                dashStyle: "dash",
+                                width: 2,
+                                label: {
+                                    text: "Số lần cắt tối thiểu"
+                                },
+                            }],
                         }],
                         tooltip: {
                             enabled: true,
@@ -253,7 +262,7 @@ $(function () {
                             horizontalAlignment: "right"
                         },
                         customizePoint: function (arg) {
-                            if (arg.seriesName === "Hour" && this.value < 8) {
+                            if (this.value < min_count) {
                                 return { color: "#ff7c7c", hoverStyle: { color: "#ff7c7c" } };
                             }
                         },
@@ -269,7 +278,7 @@ $(function () {
                         },
                     }).appendTo(itemElement)
                     break;
-                case 'Detail':
+                case 'Lịch sử':
                     $("<div id='gridContainer'>").dxDataGrid({
                         dataSource: {
                             store: dataStore,
@@ -288,6 +297,10 @@ $(function () {
                         headerFilter: {
                             visible: true,
                             allowSearch: true
+                        },
+                        filterRow: {
+                            visible: true,
+                            applyFilter: "auto"
                         },
                         wordWrapEnabled: true,
                         export: {
@@ -317,25 +330,70 @@ $(function () {
                                 container.text(options.row.rowIndex + 1)
                             }
                         }, {
-                            caption: "Name",
+                            caption: "Tên máy",
                             dataField: "machineName",
                         }, {
-                            caption: "Date",
+                            caption: "Ngày",
                             dataField: "date",
                             dataType: "date",
                         }, {
-                            caption: "Total time",
+                            caption: "Thời gian chạy tích lũy",
                             dataField: "display",
                             dataType: "time",
+                            cellTemplate: function (container, options) {
+                                container.text(options.data.display)
+                                    .css("color", options.data.time < min_hour ? "red" : "black")
+                            }
                         }, {
-                            caption: "Count",
+                            caption: "Số lần cắt sản phẩm",
                             dataField: "count",
                             dataType: "number",
+                            cellTemplate: function (container, options) {
+                                container.text(options.data.count)
+                                    .css("color", options.data.count < min_count ? "red" : "black")
+                            }
                         }],
                     }).appendTo(itemElement);
                     break;
                 default:
                     break;
+            }
+        }
+    });
+
+    $("#min-hour").dxNumberBox({
+        width: 200,
+        type: "number",
+        showClearButton: true,
+        onContentReady: function (e) {
+            e.component.option("value", min_hour);
+        },
+        onValueChanged: function (e) {
+            min_hour = e.value
+            if ($("#gridContainer").dxDataGrid("instance") !== undefined) {
+                $("#gridContainer").dxDataGrid("instance").refresh();
+            }
+            if ($("#hourChartContainer").dxChart("instance") !== undefined) {
+                $("#hourChartContainer").dxChart("instance").option("valueAxis[0].constantLines[0].value", min_hour)
+                $("#hourChartContainer").dxChart("instance").refresh();
+            }
+        }
+    });
+
+    $("#min-count").dxNumberBox({
+        width: 200,
+        showClearButton: true,
+        onContentReady: function (e) {
+            e.component.option("value", min_count);
+        },
+        onValueChanged: function (e) {
+            min_count = e.value
+            if ($("#gridContainer").dxDataGrid("instance") !== undefined) {
+                $("#gridContainer").dxDataGrid("instance").refresh();
+            }
+            if ($("#countChartContainer").dxChart("instance") !== undefined) {
+                $("#countChartContainer").dxChart("instance").option("valueAxis[0].constantLines[0].value", min_count)
+                $("#countChartContainer").dxChart("instance").refresh();
             }
         }
     });

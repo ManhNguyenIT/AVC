@@ -5,6 +5,5 @@ namespace AVC.Interfaces
 {
     public interface IMachineService : ICollection<Machine>
     {
-        Task<Machine> FindByIpAsync(string ip);
     }
 }

@@ -124,10 +124,10 @@ $(async () => {
             caption: "IP",
             dataField: "machine.ip",
         }, {
-            caption: "Name",
+            caption: "Tên máy",
             dataField: "machine.name",
         }, {
-            caption: "Status",
+            caption: "Trạng thái",
             dataField: "machine.status",
             dataType: "boolean",
             cellTemplate: function (container, options) {
@@ -136,11 +136,11 @@ $(async () => {
                     .css("background-color", options.data.machine.status === true ? "green" : "gray")
             }
         }, {
-            caption: "Total time",
+            caption: "Thời gian chạy tích lũy",
             dataField: "display",
             dataType: "time",
         }, {
-            caption: "Count",
+            caption: "Số lần cắt sản phẩm",
             dataField: "count",
             dataType: "number",
         }],
@@ -159,7 +159,7 @@ $(async () => {
                             var deferred = $.Deferred();
                             $.post('logs', {
                                 '__RequestVerificationToken': token,
-                                ip: options.data.machine.ip
+                                name: options.data.machine.name
                             }).done(function (response) {
                                 deferred.resolve(response);
                             });
@@ -170,8 +170,14 @@ $(async () => {
                         enabled: false
                     },
                     columns: [{
-                        caption: "Value",
+                        caption: "Trạng thái",
                         dataField: "gpio.value",
+                        dataType: "boolean",
+                        cellTemplate: function (container, options) {
+                            container.text(options.data.gpio.value === 0 ? "ON" : "OFF")
+                                .css("color", "white")
+                                .css("background-color", options.data.gpio.value === 0 ? "green" : "gray")
+                        }
                     }, {
                         caption: "Time update",
                         dataField: "display",

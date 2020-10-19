@@ -7,6 +7,7 @@ using AVC.Interfaces;
 using AVC.DatabaseModels;
 using Newtonsoft.Json;
 using System.Linq;
+using MongoDB.Driver;
 
 namespace AVC.Controllers
 {
@@ -53,7 +54,10 @@ namespace AVC.Controllers
 
             if (!TryValidateModel(machine))
                 return BadRequest(ModelState.Values);
-
+            if ((await _machineService.GetsAsync(Builders<Machine>.Filter.Where(i => i.name == machine.name))).Count() > 0)
+            {
+                return BadRequest("Lỗi! Trùng tên máy!");
+            }
             await _machineService.CreateAsync(machine);
             return Ok();
         }
@@ -67,6 +71,7 @@ namespace AVC.Controllers
             {
                 return NotFound();
             }
+
             var _machine = JsonConvert.DeserializeObject<Machine>(values);
             machine.status = _machine.status;
             machine.gpio = _machine.gpio;
@@ -76,6 +81,11 @@ namespace AVC.Controllers
             if (!TryValidateModel(machine))
                 return BadRequest(ModelState.Values);
 
+            var sames = await _machineService.GetsAsync(Builders<Machine>.Filter.Where(i => i.id != machine.id));
+            if (machine.gpio != null && sames.Where(i => i.gpio != null && i.gpio.Any(p => machine.gpio.Any(g => g.port == p.port))).Count() > 0)
+            {
+                return BadRequest("Lỗi! Trùng số chân!");
+            }
             await _machineService.UpdateByIdAsync(key, machine);
             return Ok();
         }

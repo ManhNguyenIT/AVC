@@ -11,7 +11,6 @@ $(function () {
                 load: function () {
                     var deferred = $.Deferred();
                     $.get('machines').done(function (response) {
-                        console.log(response)
                         deferred.resolve(response);
                     });
                     return deferred.promise();
@@ -71,6 +70,12 @@ $(function () {
             }),
             repaintChangesOnly: true,
             showBorders: true,
+            searchPanel: {
+                visible: true
+            },
+            headerFilter: {
+                visible: true
+            },
             editing: {
                 mode: "batch",
                 refreshMode: "reshape",
@@ -173,15 +178,15 @@ $(function () {
                             mode: "virtual"
                         },
                         columns: [{
-                            caption: "Tên GPIO",
+                            caption: "Tên chân",
                             dataField: "name",
                         }, {
-                            caption: "Port",
+                            caption: "Số chân",
                             dataField: "port",
                             dataType: "number",
                             validationRules: [{ type: "required" }]
                         }, {
-                            caption: "Type",
+                            caption: "Loại chân",
                             dataField: "type",
                             validationRules: [{ type: "required" }],
                             cellTemplate: function (container, options) {
@@ -195,11 +200,6 @@ $(function () {
                                 valueExpr: "id",
                                 displayExpr: "name"
                             }
-                        }, {
-                            caption: "Value",
-                            dataField: "value",
-                            dataType: "number",
-                            allowEditing: false
                         }],
                     }).appendTo(container);
                 }
