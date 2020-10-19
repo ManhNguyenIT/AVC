@@ -53,17 +53,15 @@ $(function () {
                         from: from,
                         to: to
                     }).done(function (response) {
-                        console.log(response)
                         for (let index = 0; index < response.length; index++) {
-                            response[index].machineName = response[index].machine.name;
-                            if (data.length === 0 || data.find(i => i.id === response[index].id) === null) {
+                            if (data.length === 0 || data.find(i => i.id === response[index].id) === undefined) {
                                 data.push(response[index])
                                 dataStore.push([{ type: "insert", data: response[index] }]);
                             } else {
                                 dataStore.push([{ type: "update", key: response[index].id, data: response[index] }]);
                             }
 
-                            if (data.length !== 0 && response.find(i => i.id === data[index].id) === null) {
+                            if (data.length > index && response.find(i => i.id === data[index].id) === null) {
                                 data.pop(data[index])
                                 dataStore.push([{ type: "remove", key: response[index].id, data: response[index] }]);
                             }

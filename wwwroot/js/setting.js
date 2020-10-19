@@ -77,7 +77,6 @@ $(function () {
                 visible: true
             },
             editing: {
-                mode: "batch",
                 refreshMode: "reshape",
                 allowAdding: true,
                 allowUpdating: true,
@@ -88,7 +87,7 @@ $(function () {
                 mode: "virtual"
             },
             columns: [{
-                caption: "Tên Máy",
+                caption: "Tên máy",
                 dataField: "name",
                 validationRules: [{ type: "required" }]
             }, {
@@ -167,7 +166,6 @@ $(function () {
                         columnAutoWidth: true,
                         showBorders: true,
                         editing: {
-                            mode: "batch",
                             refreshMode: "reshape",
                             allowAdding: true,
                             allowUpdating: false,

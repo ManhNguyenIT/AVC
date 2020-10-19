@@ -75,8 +75,6 @@ namespace AVC.Controllers
             var _machine = JsonConvert.DeserializeObject<Machine>(values);
             machine.status = _machine.status;
             machine.gpio = _machine.gpio;
-            machine.ip = _machine.ip;
-            machine.name = _machine.name;
 
             if (!TryValidateModel(machine))
                 return BadRequest(ModelState.Values);

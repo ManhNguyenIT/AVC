@@ -61,7 +61,7 @@ namespace AVC.Controllers
                     {
                         summary = new Summary() { machine = machine };
                     }
-                    if (machine.status)
+                    if (machine.status && !(DateTime.Now.Hour < 7))
                     {
                         var log = (await _logService
                                         .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.name == summary.machine.name && !(i.timeCreate < date)),
