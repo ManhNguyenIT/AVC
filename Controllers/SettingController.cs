@@ -80,7 +80,7 @@ namespace AVC.Controllers
                 var index=machine.gpio.FindIndex(i => i.type == GPIO_TYPE.POWER);
                 if (index!=-1)
                 {
-                    machine.gpio[index]=1;
+                    machine.gpio[index].value=1;
                 }
             }
             if (!TryValidateModel(machine))

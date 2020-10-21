@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System.ComponentModel.DataAnnotations;
 namespace AVC.DatabaseModels
 {
     public class Machine : BaseEntity
