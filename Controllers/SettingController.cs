@@ -74,12 +74,19 @@ namespace AVC.Controllers
 
             var _machine = JsonConvert.DeserializeObject<Machine>(values);
             machine.status = _machine.status;
-            machine.gpio = _machine.gpio;
-
+            if (!machine.status)
+            {
+                machine.gpio = _machine.gpio;
+                var index=machine.gpio.FindIndex(i => i.type == GPIO_TYPE.POWER);
+                if (index!=-1)
+                {
+                    machine.gpio[index]=1;
+                }
+            }
             if (!TryValidateModel(machine))
                 return BadRequest(ModelState.Values);
 
-            var sames = await _machineService.GetsAsync(Builders<Machine>.Filter.Where(i => i.id != machine.id));
+            var sames = await _machineService.GetsAsync(Builders<Machine>.Filter.Where(i => i.id != machine.id && i.ip==machine.ip));
             if (machine.gpio != null && sames.Where(i => i.gpio != null && i.gpio.Any(p => machine.gpio.Any(g => g.port == p.port))).Count() > 0)
             {
                 return BadRequest("Lỗi! Trùng số chân!");

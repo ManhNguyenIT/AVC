@@ -146,7 +146,7 @@ public class ServiceCenterController : ControllerBase
                 {
                     summary = new Summary() { machine = _machine };
                 }
-                if (_machine.status && !(DateTime.Now.Hour < 7))
+                if (_machine.status)
                 {
                     var log = (await _logService
                                     .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.name == _machine.name && !(i.timeCreate < date)),
