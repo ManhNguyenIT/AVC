@@ -18,6 +18,7 @@ namespace AVC.DatabaseModels
         public virtual int year { get => Convert.ToDateTime(date).Year; }
         public virtual int month { get => Convert.ToDateTime(date).Month; }
         public virtual int week { get => GetIso8601WeekOfYear(Convert.ToDateTime(date)); }
+        public virtual string quarter { get => month < 4 ? "I" : month < 7 ? "II" : month < 10 ? "III" : "IV"; }
         public BaseEntity()
         {
             id = Guid.NewGuid().ToString();

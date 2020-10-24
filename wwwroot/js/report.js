@@ -1,7 +1,7 @@
 "use strict";
 
 $(function () {
-    let from, to, min_hour = 8, min_count = 1000, data = [];
+    let from, to, min_hour = 8, min_count = 1000, group = 'day', data = [];
     let dataStore = new DevExpress.data.ArrayStore({
         key: "id",
         data: data
@@ -53,6 +53,7 @@ $(function () {
                         from: from,
                         to: to
                     }).done(function (response) {
+                        console.log(response)
                         for (let index = 0; index < response.length; index++) {
                             if (data.length === 0 || data.find(i => i.id === response[index].id) === undefined) {
                                 data.push(response[index])
@@ -69,6 +70,9 @@ $(function () {
                         if ($("#gridContainer").dxDataGrid("instance") !== undefined) {
                             $("#gridContainer").dxDataGrid("instance").refresh();
                         }
+                        if ($("#pivodGridContainer").dxPivotGrid("instance") !== undefined) {
+                            $("#pivodGridContainer").dxPivotGrid("instance").option("dataSource.store", dataStore)
+                        }
                     });
                 }
             }
@@ -76,7 +80,7 @@ $(function () {
     });
 
     $('#tabPanelContainer').dxTabPanel({
-        height: 460,
+        height: 'auto',
         swipeEnabled: true,
         animationEnabled: true,
         items: [{
@@ -85,6 +89,8 @@ $(function () {
             title: 'Số lần cắt',
         }, {
             title: 'Lịch sử',
+        }, {
+            title: 'Tổng hợp',
         }],
         itemTemplate: function (itemData, itemIndex, itemElement) {
             switch (itemData.title) {
@@ -117,7 +123,7 @@ $(function () {
                         },
                         valueAxis: [{
                             title: {
-                                text: "Thời gian vận hành",
+                                text: "Thời gian vận hành(Hour)",
                                 font: {
                                     color: "#e91e63"
                                 }
@@ -353,6 +359,123 @@ $(function () {
                         }],
                     }).appendTo(itemElement);
                     break;
+                case 'Tổng hợp':
+                    $("<div id='pivodChartContainer'>").dxChart({
+                        commonSeriesSettings: {
+                            type: "bar"
+                        },
+                        tooltip: {
+                            enabled: true,
+                            customizeTooltip: function (args) {
+                                var valueText = (args.seriesName.indexOf("Total") != -1) ?
+                                    Globalize.formatCurrency(args.originalValue,
+                                        "USD", { maximumFractionDigits: 0 }) :
+                                    args.originalValue;
+
+                                return {
+                                    html: args.seriesName + "<div class='currency'>"
+                                        + valueText + "</div>"
+                                };
+                            }
+                        },
+                    }).appendTo(itemElement);
+
+                    $("<div id='pivodGridContainer'>").dxPivotGrid({
+                        dataSource: {
+                            fields: [{
+                                caption: "Tên máy",
+                                dataField: "machineName",
+                                area: "row",
+                                sortBySummaryField: "Total"
+                            }, {
+                                caption: "Ngày",
+                                dataField: "date",
+                                groupInterval: group,
+                                dataType: "date",
+                                area: "column",
+                                selector: function (data) {
+                                    switch (group) {
+                                        case 'day':
+                                            return data.date;
+                                        case 'week':
+                                            return "Tuần " + data.week;
+                                        case 'month':
+                                            return "Tháng " + data.month;
+                                        case 'quarter':
+                                            return "Quý " + data.quarter;
+                                        default:
+                                            break;
+                                    }
+                                },
+                            }, {
+                                caption: "Tổng số lần cắt",
+                                dataField: "count",
+                                dataType: "number",
+                                summaryType: "sum",
+                                area: "data",
+                            }, {
+                                caption: "Tổng thời gian vận hành",
+                                dataField: "time",
+                                dataType: "number",
+                                summaryType: "sum",
+                                area: "data",
+                            }],
+                            store: dataStore,
+                            reshapeOnPush: true
+                        },
+                        allowSortingBySummary: true,
+                        showColumnGrandTotals: false,
+                        showRowGrandTotals: false,
+                        repaintChangesOnly: true,
+                        showColumnTotals: false,
+                        highlightChanges: true,
+                        columnAutoWidth: true,
+                        allowFiltering: true,
+                        showRowTotals: false,
+                        showBorders: true,
+                        fieldChooser: {
+                            enabled: true
+                        },
+                        searchPanel: {
+                            visible: true
+                        },
+                        scrolling: {
+                            mode: "virtual"
+                        },
+                        headerFilter: {
+                            visible: true,
+                            allowSearch: true
+                        },
+                        filterRow: {
+                            visible: true,
+                            applyFilter: "auto"
+                        },
+                        wordWrapEnabled: true,
+                        export: {
+                            enabled: true,
+                            allowExportSelectedData: true
+                        },
+                        onExporting: function (e) {
+                            var workbook = new ExcelJS.Workbook();
+                            var worksheet = workbook.addWorksheet('report');
+                            DevExpress.excelExporter.exportDataGrid({
+                                component: e.component,
+                                worksheet: worksheet,
+                                autoFilterEnabled: true
+                            }).then(function () {
+                                workbook.xlsx.writeBuffer().then(function (buffer) {
+                                    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'report-' + (new Date().toLocaleDateString().replace(/\/|\-/g, '.')) + '.xlsx');
+                                });
+                            });
+                            e.cancel = true;
+                        }
+                    }).appendTo(itemElement);
+
+                    $("#pivodGridContainer").dxPivotGrid("instance").bindChart($("#pivodChartContainer").dxChart("instance"), {
+                        dataFieldsDisplayMode: "splitPanes",
+                        alternateDataFields: false
+                    });
+                    break;
                 default:
                     break;
             }
@@ -392,6 +515,32 @@ $(function () {
             if ($("#countChartContainer").dxChart("instance") !== undefined) {
                 $("#countChartContainer").dxChart("instance").option("valueAxis[0].constantLines[0].value", min_count)
                 $("#countChartContainer").dxChart("instance").refresh();
+            }
+        }
+    });
+
+    $("#groupInterval").dxSelectBox({
+        dataSource: [{
+            id: 'quarter',
+            name: 'Qúy'
+        }, {
+            id: 'month',
+            name: 'Tháng'
+        }, {
+            id: 'week',
+            name: 'Tuần'
+        }, {
+            id: 'day',
+            name: 'Ngày'
+        }],
+        valueExpr: "id",
+        displayExpr: "name",
+        value: 'day',
+        onValueChanged: function (data) {
+            group = data.value
+            if ($("#pivodGridContainer").dxPivotGrid("instance") !== undefined) {
+                $("#pivodGridContainer").dxPivotGrid("instance").option("dataSource.fields[1].groupInterval", group);
+                $("#pivodGridContainer").dxPivotGrid("instance").repaint()
             }
         }
     });

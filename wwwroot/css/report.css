@@ -1,5 +1,9 @@
-﻿#gridContainer {
+﻿#gridContainer, #pivodChartContainer {
   margin-bottom: 20px;
+}
+
+#pivodChartContainer {
+  margin-top: 20px;
 }
 
 .tooltip-header {

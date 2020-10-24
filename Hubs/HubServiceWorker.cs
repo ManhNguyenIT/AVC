@@ -56,11 +56,10 @@ namespace AVC.Hubs
                                             .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.name == summary.machine.name && !(i.timeCreate < date)),
                                                         new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                                             .FirstOrDefault();
-                            if (log == null)
+                            if (log != null)
                             {
-                                log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
+                                summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - log.timeCreate);
                             }
-                            summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - log.timeCreate);
                         }
                         summaries.Add(summary);
                     }

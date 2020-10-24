@@ -113,12 +113,11 @@ public class ServiceCenterController : ControllerBase
                             .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.name == machine.name && i.gpio.port == machine.gpio[index].port && !(i.timeCreate < date)),
                                         new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                             .FirstOrDefault();
-                        if (_log == null)
+                        if (_log != null)
                         {
-                            _log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
+                            summary._time += (log.timeCreate - _log.timeCreate);
                         }
 
-                        summary._time += (log.timeCreate - _log.timeCreate);
                     }
                     else
                     {
@@ -152,11 +151,10 @@ public class ServiceCenterController : ControllerBase
                                     .GetsAsync(Builders<Log>.Filter.Where(i => i.gpio.value == 0 && i.gpio.type == GPIO_TYPE.POWER && i.name == _machine.name && !(i.timeCreate < date)),
                                                 new FindOptions<Log, Log>() { Limit = 1, Sort = Builders<Log>.Sort.Descending(i => i.timeCreate) }))
                                     .FirstOrDefault();
-                    if (log == null)
+                    if (log != null)
                     {
-                        log = new Log() { timeCreate = new DateTimeOffset(DateTime.Now.Date.AddHours(7)).ToUnixTimeSeconds() };
+                        summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - log.timeCreate);
                     }
-                    summary._time += (((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds() - log.timeCreate);
                 }
                 summaries.Add(summary);
             }

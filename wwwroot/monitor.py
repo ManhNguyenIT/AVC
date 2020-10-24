@@ -29,7 +29,7 @@ class RequestThread(threading.Thread):
     def run(self):
         try:
             response = requests.post(
-                url=self.url, json=self.data, headers=self.headers, timeout=5)
+                url=self.url, json=self.data, headers=self.headers, timeout=5, verify=False)
             print(response.status_code, response.reason)
         except:
             pass
