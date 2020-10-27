@@ -15,8 +15,8 @@ import threading
 
 pigpio.exceptions = True
 
-last = [None]*32
-cb = []
+counter = [None]*32
+cb = {}
 
 
 class RequestThread(threading.Thread):
@@ -29,24 +29,31 @@ class RequestThread(threading.Thread):
     def run(self):
         try:
             response = requests.post(
-                url=self.url, json=self.data, headers=self.headers, timeout=5, verify=False)
+                url=self.url, json=self.data, headers=self.headers, timeout=5)
             print(response.status_code, response.reason)
         except:
             pass
 
 
-def cbf(GPIO, level, tick):
-    last[GPIO] = tick
-    if last[GPIO] is not None:
-        diff = pigpio.tickDiff(last[GPIO], tick)
-        print("G={} l={} d={} tick={}".format(
-            GPIO, level, diff, pi.get_current_tick()))
+def cbf(g, level, tick):
+    counter[g] = tick
+    cb[g].cancel()
+
+    if counter[g] is not None and level == 1:
+        counter[g] += 1
+
+    if g in cb:
+        print("G={} l={} counter={}".format(
+            g, level, counter[g]))
 
         url = "http://localhost:5000/service-center/update"
-        payload = {"port": GPIO, "value": level}
+        payload = {"port": g, "value": level}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         thread = RequestThread(url, payload, headers)
         thread.start()
+
+    time.sleep(1000)
+    cb[g] = pi.callback(g, pigpio.EITHER_EDGE, cbf)
 
 
 pi = pigpio.pi()
@@ -62,9 +69,9 @@ else:
 
 for g in G:
     pi.set_mode(g, pigpio.INPUT)
-    pi.set_glitch_filter(g, 1000)
+    pi.set_glitch_filter(g, 300000)
     pi.set_pull_up_down(g, pigpio.PUD_UP)
-    cb.append(pi.callback(g, pigpio.EITHER_EDGE, cbf))
+    cb[g] = pi.callback(g, pigpio.EITHER_EDGE, cbf)
 
 try:
     print("START")
@@ -72,7 +79,7 @@ try:
         time.sleep(60)
 except KeyboardInterrupt:
     print("STOP")
-    for c in cb:
-        c.cancel()
+    for g in cb:
+        cb[g].cancel()
 
 pi.stop()
