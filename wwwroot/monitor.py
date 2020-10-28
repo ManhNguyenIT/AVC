@@ -7,21 +7,39 @@
 # monitor.py          # monitor all GPIO
 # monitor.py 23 24 25 # monitor GPIO 23, 24, and 25
 
+import os
 import sys
 import time
+import uuid
 import pigpio
+import os.path
+import logging
+import datetime
 import requests
 import threading
+from logging.handlers import TimedRotatingFileHandler
+
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+# create logger
+logger = logging.getLogger("LOGGER")
+logger.setLevel(logging.DEBUG)
+handler = TimedRotatingFileHandler("logs/log_{}.txt".format(
+    datetime.datetime.now().strftime('%Y-%m-%d')), when="midnight", interval=1)
+formatter = logging.Formatter("%(asctime)s\t[%(levelname)s]\t%(message)s")
+handler.setFormatter(formatter)
+# finally add handler to logger
+logger.addHandler(handler)
 
 pigpio.exceptions = True
 
-counter = [None]*32
-cb = {}
+cb = []
 
 
 class RequestThread(threading.Thread):
-    def __init__(self, url, data, headers):
+    def __init__(self, id, url, data, headers):
         super(RequestThread, self).__init__()
+        self.id = id
         self.url = url
         self.data = data
         self.headers = headers
@@ -29,31 +47,23 @@ class RequestThread(threading.Thread):
     def run(self):
         try:
             response = requests.post(
-                url=self.url, json=self.data, headers=self.headers, timeout=5)
-            print(response.status_code, response.reason)
-        except:
-            pass
+                url=self.url, data=self.data, headers=self.headers, timeout=5)
+            logger.info("id{}\tresponse={} {}".format(
+                self.id, response.status_code, response.reason))
+        except Exception as error:
+            logger.error(str(error))
 
 
-def cbf(g, level, tick):
-    counter[g] = tick
-    cb[g].cancel()
-
-    if counter[g] is not None and level == 1:
-        counter[g] += 1
-
-    if g in cb:
-        print("G={} l={} counter={}".format(
-            g, level, counter[g]))
-
-        url = "http://localhost:5000/service-center/update"
-        payload = {"port": g, "value": level}
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        thread = RequestThread(url, payload, headers)
-        thread.start()
-
-    time.sleep(1000)
-    cb[g] = pi.callback(g, pigpio.EITHER_EDGE, cbf)
+def cbf(GPIO, level, tick):
+    id = str(uuid.uuid4())
+    url = "http://192.168.43.140:80/avc/service-center/update"
+    payload = "{\"value\": "+str(level)+"}"
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    logger.info("id{}\tpayload={}".format(id, payload))
+    thread = RequestThread(id, url, payload, headers)
+    thread.start()
 
 
 pi = pigpio.pi()
@@ -71,15 +81,13 @@ for g in G:
     pi.set_mode(g, pigpio.INPUT)
     pi.set_glitch_filter(g, 300000)
     pi.set_pull_up_down(g, pigpio.PUD_UP)
-    cb[g] = pi.callback(g, pigpio.EITHER_EDGE, cbf)
+    cb.append(pi.callback(g, pigpio.EITHER_EDGE, cbf))
 
 try:
-    print("START")
     while True:
         time.sleep(60)
 except KeyboardInterrupt:
-    print("STOP")
-    for g in cb:
-        cb[g].cancel()
+    for c in cb:
+        c.cancel()
 
 pi.stop()
