@@ -56,11 +56,9 @@ class RequestThread(threading.Thread):
 
 def cbf(GPIO, level, tick):
     id = str(uuid.uuid4())
-    url = "http://192.168.43.140:80/avc/service-center/update"
-    payload = "{\"value\": "+str(level)+"}"
-    headers = {
-        'Content-Type': 'application/json'
-    }
+    url = "http://192.168.9.125/avc/service-center/update"
+    payload = {"port": GPIO, "value": level}
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     logger.info("id{}\tpayload={}".format(id, payload))
     thread = RequestThread(id, url, payload, headers)
     thread.start()
