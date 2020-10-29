@@ -47,7 +47,7 @@ class RequestThread(threading.Thread):
     def run(self):
         try:
             response = requests.post(
-                url=self.url, data=self.data, headers=self.headers, timeout=5)
+                url=self.url, json=self.data, headers=self.headers, timeout=5)
             logger.info("id{}\tresponse={} {}".format(
                 self.id, response.status_code, response.reason))
         except Exception as error:
